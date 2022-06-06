@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
-class ConfirmDialog extends AlertDialog {
-  ConfirmDialog(BuildContext context)
-      : super(
+Future<bool> showConfirmDialog(BuildContext context, DismissDirection direction) async {
+  return await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
           title: Text('Remove Team'),
           content: Text('Are you shure?'),
           actions: [
@@ -18,4 +20,6 @@ class ConfirmDialog extends AlertDialog {
                 })
           ],
         );
+      }
+  );
 }

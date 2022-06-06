@@ -3,7 +3,13 @@ import 'package:flutter/material.dart';
 //--------------------------  All teams data model  ----------------------------
 class DataModel extends ChangeNotifier {
   // Team list
-  List<OneTeam> _teamList = [];
+  List<OneTeam> _teamList = [
+    OneTeam(name: "Andrew"),
+    OneTeam(name: "Sergey"),
+    OneTeam(name: "Irina"),
+    OneTeam(name: "Vasya"),
+    OneTeam(name: "Tolya"),
+  ];
 
   // Team count
   int get length => _teamList.length;
