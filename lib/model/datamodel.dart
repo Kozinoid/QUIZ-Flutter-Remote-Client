@@ -1,15 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:quiflutter/database/teamdb.dart';
 
 //--------------------------  All teams data model  ----------------------------
 class DataModel extends ChangeNotifier {
   // Team list
-  List<OneTeam> _teamList = [
-    OneTeam(name: "Andrew"),
-    OneTeam(name: "Sergey"),
-    OneTeam(name: "Irina"),
-    OneTeam(name: "Vasya"),
-    OneTeam(name: "Tolya"),
-  ];
+  List<OneTeam> _teamList = [];
 
   // Team count
   int get length => _teamList.length;
@@ -29,6 +24,7 @@ class DataModel extends ChangeNotifier {
   bool addNewTeam({String name = 'New Team'}) {
     if (!hasName(name)) {
       _teamList.add(OneTeam(name: name));
+      refreshIndexes();
       refreshAll();
       return true;
     } else {
@@ -48,6 +44,7 @@ class DataModel extends ChangeNotifier {
   // Remove Team
   void removeTeam(int index) {
     _teamList.removeAt(index);
+    refreshIndexes();
     refreshAll();
   }
 
@@ -78,6 +75,7 @@ class DataModel extends ChangeNotifier {
   // Sort By Score
   void sortByScores() {
     _teamList.sort((teamA, teamB) => teamB.teamScore - teamA.teamScore);
+    refreshIndexes();
     refreshAll();
   }
 
@@ -98,11 +96,38 @@ class DataModel extends ChangeNotifier {
     });
   }
 
+  // Refresh Indexes
+  void refreshIndexes(){
+    for (var i = 0; i < _teamList.length; i++){
+      _teamList[i].teamID = i + 1;
+    }
+  }
+
   // Is [index] Team has Max/Mid/Min score? - <1; 0; -1>
   int isMaxMin(int index) {
     if (_teamList[index].teamScore == _max) return 1;
     if (_teamList[index].teamScore == _min) return -1;
     return 0;
+  }
+
+  // Clear Team List
+  void clearAll(){
+    _teamList.clear();
+    refreshAll();
+  }
+
+  //---------------------------  DATA STORE  -----------------------------------
+  // Store all data
+  void loadData() async {
+     _teamList.clear();
+     _teamList = await DBProvider.db.getTeamList();
+     refreshAll();
+  }
+
+  // Restore all data
+  void saveData() async {
+    refreshIndexes();
+    await DBProvider.db.storeAllDatabase(_teamList);
   }
 }
 
@@ -114,17 +139,33 @@ class OneTeam {
   }
 
   // Fields
+  int _teamId = null;
   String _teamName = ''; // Team name
   int _teamScore = 0; // Team score
 
   // Setters/Getters
+  set teamID(int id) => _teamId = id;
+  get teamID => _teamId;
   set teamName(String newName) => _teamName = newName;
-
-  String get teamName => _teamName;
-
+  get teamName => _teamName;
   set teamScore(int newScore) => _teamScore = newScore;
+  get teamScore => _teamScore;
 
-  int get teamScore => _teamScore;
+  // ToMap
+  Map<String, dynamic> toMap(){
+    return {
+      'id': _teamId,
+      'name': _teamName,
+      'score': _teamScore
+    };
+  }
+
+  // FromMAp
+  OneTeam.fromMap(Map<String, dynamic> teamMap){
+    _teamId = teamMap['id'];
+    _teamName = teamMap['name'];
+    _teamScore = teamMap['score'];
+  }
 
   // Inc Score
   void incrementScore() {

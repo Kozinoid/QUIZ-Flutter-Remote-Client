@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:quiflutter/style/styles.dart';
 
-import 'datamodel.dart';
+import '../model/datamodel.dart';
 
 class TeamListItem extends StatelessWidget {
   const TeamListItem({Key key, this.index}) : super(key: key);

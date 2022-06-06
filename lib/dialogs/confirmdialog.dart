@@ -5,7 +5,7 @@ Future<bool> showConfirmDialog(BuildContext context, DismissDirection direction)
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Remove Team'),
+          title: Text('Remove'),
           content: Text('Are you shure?'),
           actions: [
             TextButton(

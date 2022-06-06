@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:quiflutter/homepage.dart';
-import 'package:quiflutter/styles.dart';
+import 'package:quiflutter/style/styles.dart';
 
 void main() {
   runApp(MyApp());

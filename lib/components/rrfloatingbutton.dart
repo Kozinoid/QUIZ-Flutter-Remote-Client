@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:quiflutter/styles.dart';
+import 'package:quiflutter/style/styles.dart';
 
 class RoundedRectangleFloatingButton extends FloatingActionButton{
   RoundedRectangleFloatingButton({Widget child, Function() onPressed})

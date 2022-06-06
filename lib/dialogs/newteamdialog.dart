@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:quiflutter/datamodel.dart';
-import 'package:quiflutter/styles.dart';
+import 'package:quiflutter/model/datamodel.dart';
+import 'package:quiflutter/style/styles.dart';
 
 Function addNewTeam(BuildContext context, DataModel data) {
   // Text edit controller to read new Team Name
