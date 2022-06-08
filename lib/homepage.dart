@@ -18,9 +18,40 @@ class MyHomePage extends StatefulWidget {
 }
 
 //--------------------------  Root state  --------------------------------------
-class _MyHomePageState extends State<MyHomePage> {
+class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver{
   ConnectionModel connection = ConnectionModel();
   DataModel dataModel = DataModel();
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    // First load all data
+    dataModel.loadData();
+  }
+
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    // Save all data before exit
+    dataModel.saveData();
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // TODO: implement didChangeAppLifecycleState
+    if (state == AppLifecycleState.paused){
+      // if the App is paused save all data
+      dataModel.saveData();
+    } else if(state == AppLifecycleState.resumed){
+      // if the App is resumed load all data
+      dataModel.loadData();
+    }
+    super.didChangeAppLifecycleState(state);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -89,11 +120,11 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                   RoundedRectangleFloatingButton(
                     child: Icon(Icons.folder, color: quizListTextColor,),
-                    onPressed: () {data.loadData();},
+                    onPressed: () { data.loadData();},
                   ),
                   RoundedRectangleFloatingButton(
                     child: Icon(Icons.save, color: quizListTextColor,),
-                    onPressed: () async { await data.saveData();},
+                    onPressed: () { data.saveData();},
                   )
                 ],
               );

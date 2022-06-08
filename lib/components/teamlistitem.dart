@@ -32,11 +32,15 @@ class TeamListItem extends StatelessWidget {
       ),
       margin: EdgeInsets.all(0),
       child: ListTile(
+        contentPadding: EdgeInsets.symmetric(vertical: 3.0),
         title: Row(
           children: [
-            Text(
-              '${index + 1}: ',
-              style: middleFont,
+            SizedBox(
+              width: 30,
+              child: Text(
+                '${index + 1}.',
+                style: smallFont,
+              ),
             ),
             Text(
               '${teamList.getTeam(index).teamName}',
@@ -49,12 +53,14 @@ class TeamListItem extends StatelessWidget {
           textAlign: TextAlign.center,
           style: bigFont,
         ),
-        leading: IconButton(
-          icon: Icon(Icons.remove),
+        leading: TextButton(
+          //icon: Icon(Icons.remove, color: quizMainTextColor,),
+          child: Text('-', style: bigFont,),
           onPressed: () {teamList.decrementTeamScore(index);},
         ),
-        trailing: IconButton(
-          icon: Icon(Icons.add),
+        trailing: TextButton(
+          //icon: Icon(Icons.add, color: quizMainTextColor, ),
+          child: Text('+', style: bigFont,),
           onPressed: () {teamList.incrementTeamScore(index);},
         ),
         tileColor: bkcolor,
