@@ -174,6 +174,6 @@ class OneTeam {
 
   // Dec Score
   void decrementScore() {
-    _teamScore--;
+    if (_teamScore > 0) _teamScore--;
   }
 }

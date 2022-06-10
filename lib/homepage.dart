@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:quiflutter/model/connectionmodel.dart';
+import 'package:quiflutter/model/tcpconnection.dart';
 import 'package:quiflutter/model/datamodel.dart';
 import 'package:quiflutter/components/rrfloatingbutton.dart';
 import 'package:quiflutter/style/styles.dart';
 import 'package:quiflutter/components/teamlistitem.dart';
 import 'dialogs/confirmdialog.dart';
 import 'dialogs/newteamdialog.dart';
+import 'model/netconnection.dart';
 
 //------------------------ ROOT STATEFUL WUDGET --------------------------------
 class MyHomePage extends StatefulWidget {
@@ -19,7 +20,7 @@ class MyHomePage extends StatefulWidget {
 
 //--------------------------  Root state  --------------------------------------
 class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver{
-  ConnectionModel connection = ConnectionModel();
+  NetConnection connection = NetConnection();
   DataModel dataModel = DataModel();
 
   @override
@@ -52,29 +53,64 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver{
     }
     super.didChangeAppLifecycleState(state);
   }
-
+//------------------------------------------------------------------------------
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider<ConnectionModel>.value(value: connection),
+        ChangeNotifierProvider<NetConnection>.value(value: connection),
         ChangeNotifierProvider<DataModel>.value(value: dataModel),
       ],
-      child: Consumer<ConnectionModel>(
+      child: Consumer<NetConnection>(
         builder: (context, connection, child) {
           return Consumer<DataModel>(
             builder: (context, data, child) {
               return Scaffold(
                 backgroundColor: quizMainBackColor,
                 appBar: AppBar(
-                  title: Text(
-                    widget.title,
+                  actions: [
+
+                    // ---------------  'Connect' button  ----------------------
+                    RoundedRectangleFloatingButton(
+                      child: connection.connected
+                          ? Icon(Icons.wifi_tethering_sharp, color: quizListTextColor,)
+                          : Icon(Icons.portable_wifi_off, color: quizListTextColor,),
+                      onPressed: ()  {connection.searchIP();},//-------------------------------  CONNECT  ------------------------------------
+                    ),
+
+                    // ---------------  'Clear all' button  ----------------------
+                    RoundedRectangleFloatingButton(
+                      child: Icon(Icons.clear, color: quizListTextColor,),
+                      onPressed: () async {
+                        if (await showConfirmDialog(context, null, 'Clear all', 'Are you shure?')) data.clearAll();
+                      },
+                    ),
+
+                    // ---------------  'Load all' button  ----------------------
+                    RoundedRectangleFloatingButton(
+                      child: Icon(Icons.folder, color: quizListTextColor,),
+                      onPressed: () async {
+                        if (await showConfirmDialog(context, null, 'Load table', 'Load last saved table?'))  data.loadData();
+                      },
+                    ),
+
+                    // ---------------  'Save all' button  ----------------------
+                    RoundedRectangleFloatingButton(
+                      child: Icon(Icons.save, color: quizListTextColor,),
+                      onPressed: () async {
+                        if (await showConfirmDialog(context, null, 'Save table', 'Save changes?'))  data.saveData();
+                      },
+                    )
+
+                  ],
+                  title: Text( widget.title,
                     style: TextStyle(
                         color: quizListTextColor,
                         backgroundColor: quizMainPanelColor),
                   ),
-                  centerTitle: true,
+                  //centerTitle: true,
                 ),
+
                 // -------------------------  Team List  -----------------------
                 body: Container(
                   child: ListView.builder(
@@ -83,7 +119,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver{
                         //-------- One Team Item  ------
                         return Dismissible(
                           // Confirm deleting Team
-                          confirmDismiss: (direction) => showConfirmDialog(context, direction),
+                          confirmDismiss: (direction) => showConfirmDialog(context, direction,  'Delete team ${data.getTeam(index).teamName}', 'Are you shure?'),
                           // Deleting Team
                           onDismissed: (direction) { data.removeTeam(index); },
                           key: Key(data.getTeam(index).teamName),
@@ -109,23 +145,8 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver{
                   // -------------- 'Toggle Full screen' button  ---------------
                   RoundedRectangleFloatingButton(
                     child: Icon(Icons.fullscreen, color: quizListTextColor,),
-                    onPressed: () {},
+                    onPressed: () {},//--------------------------------  FULLSCREEN  ------------------------------------
                   ),
-                  // ---------------  'Clear all' button  ----------------------
-                  RoundedRectangleFloatingButton(
-                    child: Icon(Icons.clear, color: quizListTextColor,),
-                    onPressed: () async {
-                        if (await showConfirmDialog(context, null)) data.clearAll();
-                      },
-                  ),
-                  RoundedRectangleFloatingButton(
-                    child: Icon(Icons.folder, color: quizListTextColor,),
-                    onPressed: () { data.loadData();},
-                  ),
-                  RoundedRectangleFloatingButton(
-                    child: Icon(Icons.save, color: quizListTextColor,),
-                    onPressed: () { data.saveData();},
-                  )
                 ],
               );
             },

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
-Future<bool> showConfirmDialog(BuildContext context, DismissDirection direction) async {
+Future<bool> showConfirmDialog(BuildContext context, DismissDirection direction, String title, String question) async {
   return await showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Remove'),
-          content: Text('Are you shure?'),
+          title: Text(title),
+          content: Text(question),
           actions: [
             TextButton(
                 child: Text('Yes'),
