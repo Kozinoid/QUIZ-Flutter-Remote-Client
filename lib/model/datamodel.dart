@@ -139,7 +139,7 @@ class OneTeam {
   }
 
   // Fields
-  int _teamId = null;
+  int _teamId = 0;
   String _teamName = ''; // Team name
   int _teamScore = 0; // Team score
 

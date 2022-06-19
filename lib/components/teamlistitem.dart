@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:quiflutter/model/netconnection.dart';
 import 'package:quiflutter/style/styles.dart';
 
 import '../model/datamodel.dart';
@@ -12,6 +13,7 @@ class TeamListItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final DataModel teamList = Provider.of<DataModel>(context);
+    final NetConnection connection = Provider.of<NetConnection>(context);
     Color bkcolor;
     switch (teamList.isMaxMin(index)){
       case -1:
@@ -56,12 +58,18 @@ class TeamListItem extends StatelessWidget {
         leading: TextButton(
           //icon: Icon(Icons.remove, color: quizMainTextColor,),
           child: Text('-', style: bigFont,),
-          onPressed: () {teamList.decrementTeamScore(index);},
+          onPressed: () {
+            teamList.decrementTeamScore(index);
+            connection.sendOneTeam(teamList.getTeam(index).teamName, teamList.getTeam(index).teamScore);
+            },
         ),
         trailing: TextButton(
           //icon: Icon(Icons.add, color: quizMainTextColor, ),
           child: Text('+', style: bigFont,),
-          onPressed: () {teamList.incrementTeamScore(index);},
+          onPressed: () {
+            teamList.incrementTeamScore(index);
+            connection.sendOneTeam(teamList.getTeam(index).teamName, teamList.getTeam(index).teamScore);
+            },
         ),
         tileColor: bkcolor,
       ),
