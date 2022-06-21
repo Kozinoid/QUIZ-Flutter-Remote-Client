@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:quiflutter/model/tcpconnection.dart';
-import 'package:quiflutter/model/datamodel.dart';
-import 'package:quiflutter/components/rrfloatingbutton.dart';
+import 'package:quiflutter/connection/net_connection.dart';
+import 'package:quiflutter/model/data_model.dart';
+import 'package:quiflutter/components/quiz_floating_button.dart';
 import 'package:quiflutter/style/styles.dart';
-import 'package:quiflutter/components/teamlistitem.dart';
-import 'dialogs/confirmdialog.dart';
-import 'dialogs/newteamdialog.dart';
-import 'model/netconnection.dart';
+import 'package:quiflutter/components/teamlist_item.dart';
+import 'dialogs/confirm_dialog.dart';
+import 'dialogs/new_team_dialog.dart';
 
 //------------------------ ROOT STATEFUL WUDGET --------------------------------
 class MyHomePage extends StatefulWidget {
@@ -20,25 +19,32 @@ class MyHomePage extends StatefulWidget {
 
 //--------------------------  Root state  --------------------------------------
 class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
-  NetConnection connection = NetConnection();
-  DataModel dataModel = DataModel();
+  NetConnection netConnection;
+  DataModel dataModel;
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
+    // Init connection and data
+    netConnection = NetConnection();
+    dataModel = DataModel(connection: netConnection);
+    netConnection.streamController.stream.listen((connectionState) {dataModel.loadData();});
+    // Start listening of application lifecycles
     WidgetsBinding.instance.addObserver(this);
+    // Connect to server
+    netConnection.connect();
     // First load all data
-    dataModel.loadData();
-    if (!connection.connected) {connection.searchIP();}
+    //dataModel.loadData();
   }
 
   @override
   void dispose() {
     // TODO: implement dispose
-    connection.disconnect();
     // Save all data before exit
     dataModel.saveData();
+    netConnection.disconnect();                            // DISCONNECTION
+    netConnection.streamController.close();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -48,11 +54,13 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     // TODO: implement didChangeAppLifecycleState
     if (state == AppLifecycleState.paused) {
       // if the App is paused save all data
-      connection.disconnect();
       dataModel.saveData();
+      netConnection.disconnect();                          // DISCONNECTION
     } else if (state == AppLifecycleState.resumed) {
+      // Connect to server
+      netConnection.connect();
       // if the App is resumed load all data
-      dataModel.loadData();
+      //dataModel.loadData();
     }
     super.didChangeAppLifecycleState(state);
   }
@@ -62,40 +70,38 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider<NetConnection>.value(value: connection),
+        ChangeNotifierProvider<NetConnection>.value(value: netConnection),
+        // Connection provider
         ChangeNotifierProvider<DataModel>.value(value: dataModel),
+        // Data provider
       ],
-      child: Consumer<NetConnection>(
-        builder: (context, connection, child) {
-          if (connection.connected) {
-            connection.sendClearTable();
-            for (int i = 0; i < dataModel.length; i++){
-              connection.sendAddTeam(dataModel.getTeam(i).teamName, dataModel.getTeam(i).teamScore);
-            }
-          }
+      child: Consumer<DataModel>(
+        builder: (context, data, child) {
+          return Scaffold(
+            backgroundColor: quizMainBackColor,
+            drawer: Drawer(
+              child: ListView(
+                children: [
+                  //-------------------- Menu header -----------------------
+                  DrawerHeader(
+                      margin: EdgeInsets.all(0),
+                      decoration: ShapeDecoration(
+                        color: quizMainPanelColor,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(0),
+                        ),
+                      ),
+                      child: Center(
+                        child: Text(
+                          'QUIZ menu',
+                          style: menuFont,
+                        ),
+                      )),
 
-          return Consumer<DataModel>(
-            builder: (context, data, child) {
-              return Scaffold(
-                backgroundColor: quizMainBackColor,
-                drawer: Drawer(
-                  child: ListView(
-                    children: [
-                      //-------------------- Menu header -----------------------
-                      DrawerHeader(
-                          margin: EdgeInsets.all(0),
-                          decoration: ShapeDecoration(
-                            color: quizMainPanelColor,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(0),
-                            ),
-                          ),
-                          child: Center(
-                            child: Text('QUIZ menu', style: menuFont,),
-                          )),
-
-                      //--------------- Menu item 'Connection' -----------------
-                      ListTile(
+                  //--------------- Menu item 'Connection' -----------------
+                  Consumer<NetConnection>(
+                    builder: (context, connection, child) {
+                      return ListTile(
                         tileColor: quizMainBackColor,
                         leading: connection.connected
                             ? Icon(
@@ -106,55 +112,84 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                                 Icons.portable_wifi_off,
                                 color: quizListTextColor,
                               ),
-                        title: Text('Connection', style: menuFont,),
-                        onTap: (){
-                          if (!connection.connected) {connection.searchIP();}
+                        title: Text(
+                          'Connection',
+                          style: menuFont,
+                        ),
+                        onTap: () {
+                          connection.connect();
                         },
-                      ),
-
-                      //--------------- Menu item 'Clear All' ------------------
-                      ListTile(
-                        tileColor: quizMainBackColor,
-                        leading: Icon(Icons.clear, color: quizListTextColor,),
-                        title: Text('Clear all',style: menuFont,),
-                        onTap: () async {
-                          if (await showConfirmDialog(
-                              context, null, 'Clear all', 'Are you shure?'))
-                            data.clearAll();
-                        },
-                      ),
-
-                      //------------------ Menu item 'Load' --------------------
-                      ListTile(
-                        tileColor: quizMainBackColor,
-                        leading: Icon(Icons.folder, color: quizListTextColor, ),
-                        title: Text('Load', style: menuFont,),
-                        onTap: () async {
-                          if (await showConfirmDialog(context, null, 'Load table',
-                              'Load last saved table?')) data.loadData();
-                        },
-                      ),
-
-                      //------------------ Menu item 'Save' --------------------
-                      ListTile(
-                        tileColor: quizMainBackColor,
-                        leading: Icon(Icons.save, color: quizListTextColor,),
-                        title: Text('Save', style: menuFont,),
-                        onTap: () async {
-                          if (await showConfirmDialog(
-                              context, null, 'Save table', 'Save changes?'))
-                            data.saveData();
-                        },
-                      ),
-                      //--------------------------------------------------------
-
-                    ],
+                      );
+                    },
                   ),
-                ),
-                appBar: AppBar(
-                  actions: [
-                    // ------------- DOUBLE 'Connect' button  ------------------
-                    RoundedRectangleFloatingButton(
+
+                  //--------------- Menu item 'Clear All' ------------------
+                  ListTile(
+                    tileColor: quizMainBackColor,
+                    leading: Icon(
+                      Icons.clear,
+                      color: quizListTextColor,
+                    ),
+                    title: Text(
+                      'Clear all',
+                      style: menuFont,
+                    ),
+                    onTap: () async {
+                      if (await showConfirmDialog(
+                          context, null, 'Clear all', 'Are you shure?'))
+                        {
+                          data.clearAll();
+                          netConnection.sendClearTableCommand();
+                        }
+                    },
+                  ),
+
+                  //------------------ Menu item 'Load' --------------------
+                  ListTile(
+                    tileColor: quizMainBackColor,
+                    leading: Icon(
+                      Icons.folder,
+                      color: quizListTextColor,
+                    ),
+                    title: Text(
+                      'Load',
+                      style: menuFont,
+                    ),
+                    onTap: () async {
+                      if (await showConfirmDialog(context, null, 'Load table',
+                          'Load last saved table?')) {
+                        data.loadData();
+                      }
+                    },
+                  ),
+
+                  //------------------ Menu item 'Save' --------------------
+                  ListTile(
+                    tileColor: quizMainBackColor,
+                    leading: Icon(
+                      Icons.save,
+                      color: quizListTextColor,
+                    ),
+                    title: Text(
+                      'Save',
+                      style: menuFont,
+                    ),
+                    onTap: () async {
+                      if (await showConfirmDialog(
+                          context, null, 'Save table', 'Save changes?'))
+                        data.saveData();
+                    },
+                  ),
+                  //--------------------------------------------------------
+                ],
+              ),
+            ),
+            appBar: AppBar(
+              actions: [
+                // ------------- DOUBLE 'Connect' button  ------------------
+                Consumer<NetConnection>(
+                  builder: (context, connection, child) {
+                    return RoundedRectangleFloatingButton(
                       child: connection.connected
                           ? Icon(
                               Icons.wifi_tethering_sharp,
@@ -165,78 +200,79 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                               color: quizIconColor,
                             ),
                       onPressed: () {
-                        connection.searchIP();
+                        connection.connect();
                       },
-                    ),
-                  ],
-                  title: Text(
-                    widget.title,
-                    style: TextStyle(
-                        color: quizMainTextColor,
-                        backgroundColor: quizMainPanelColor),
-                  ),
-                  centerTitle: true,
+                    );
+                  },
                 ),
+              ],
+              title: Text(
+                widget.title,
+                style: TextStyle(
+                    color: quizMainTextColor,
+                    backgroundColor: quizMainPanelColor),
+              ),
+              centerTitle: true,
+            ),
 
-                // -------------------------  Team List  -----------------------
-                body: Container(
-                  child: ListView.builder(
-                      itemCount: data.length,
-                      itemBuilder: (context, index) {
-                        //-------- One Team Item  ------
-                        return Dismissible(
-                          // Confirm deleting Team
-                          confirmDismiss: (direction) => showConfirmDialog(
-                              context,
-                              direction,
-                              'Delete team ${data.getTeam(index).teamName}',
-                              'Are you shure?'),
-                          // Deleting Team
-                          onDismissed: (direction) {
-                            data.removeTeam(index);
-                            if (connection.connected) connection.sendDeleteTeam(data.getTeam(index).teamName);
-                          },
-                          key: Key(data.getTeam(index).teamName),
-                          child: TeamListItem(
-                            index: index,
-                          ),
-                        );
-                      }),
+            // -------------------------  Team List  -----------------------
+            body: Container(
+              child: ListView.builder(
+                  itemCount: data.length,
+                  itemBuilder: (context, index) {
+                    //-------- One Team Item  ------
+                    return Dismissible(
+                      // Confirm deleting Team
+                      confirmDismiss: (direction) => showConfirmDialog(
+                          context,
+                          direction,
+                          'Delete team ${data.getTeam(index).teamName}',
+                          'Are you shure?'),
+                      // Deleting Team
+                      onDismissed: (direction) {
+                        data.removeTeam(index);
+                        //if (netConnection.connected) netConnection.sendDeleteTeam(data.getTeam(index).teamName);
+                      },
+                      key: Key(data.getTeam(index).teamName),
+                      child: TeamListItem(
+                        index: index,
+                      ),
+                    );
+                  }),
+            ),
+            persistentFooterButtons: [
+              // ------------------ 'Add New Team' button  -----------------
+              RoundedRectangleFloatingButton(
+                child: Icon(
+                  Icons.add,
+                  color: quizIconColor,
                 ),
-                persistentFooterButtons: [
-                  // ------------------ 'Add New Team' button  -----------------
-                  RoundedRectangleFloatingButton(
-                    child: Icon(
-                      Icons.add,
-                      color: quizIconColor,
-                    ),
-                    onPressed: () {
-                      addNewTeam(context, data);
-                    },
-                  ),
-                  // ------------------ 'Sort Team List' button  ---------------
-                  RoundedRectangleFloatingButton(
-                    child: Icon(
-                      Icons.sort,
-                      color: quizIconColor,
-                    ),
-                    onPressed: () {
-                      data.sortByScores();
-                    },
-                  ),
-                  // -------------- 'Toggle Full screen' button  ---------------
-                  RoundedRectangleFloatingButton(
-                    child: Icon(
-                      Icons.fullscreen,
-                      color: quizIconColor,
-                    ),
-                    onPressed:() {
-                      if (connection.connected) connection.sendFullScreen();
-                    }, //--------------------------------  FULLSCREEN  ------------------------------------
-                  ),
-                ],
-              );
-            },
+                onPressed: () {
+                  addNewTeam(context, data);
+                },
+              ),
+              // ------------------ 'Sort Team List' button  ---------------
+              RoundedRectangleFloatingButton(
+                child: Icon(
+                  Icons.sort,
+                  color: quizIconColor,
+                ),
+                onPressed: () {
+                  data.sortByScores();
+                },
+              ),
+              // -------------- 'Toggle Full screen' button  ---------------
+              RoundedRectangleFloatingButton(
+                child: Icon(
+                  Icons.fullscreen,
+                  color: quizIconColor,
+                ),
+                onPressed: () {
+                  if (netConnection.connected)
+                    netConnection.sendFullscreenModeCommand();
+                }, //--------------------------------  FULLSCREEN  ------------------------------------
+              ),
+            ],
           );
         },
       ),

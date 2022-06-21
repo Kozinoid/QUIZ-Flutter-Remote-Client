@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:quiflutter/model/netconnection.dart';
 import 'package:quiflutter/style/styles.dart';
 
-import '../model/datamodel.dart';
+import '../model/data_model.dart';
 
 class TeamListItem extends StatelessWidget {
   const TeamListItem({Key key, this.index}) : super(key: key);
@@ -13,17 +12,16 @@ class TeamListItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final DataModel teamList = Provider.of<DataModel>(context);
-    final NetConnection connection = Provider.of<NetConnection>(context);
-    Color bkcolor;
+    Color backColor;
     switch (teamList.isMaxMin(index)){
       case -1:
-        bkcolor = quizLowScoreColor;
+        backColor = quizLowScoreColor;
         break;
       case 1:
-        bkcolor = quizHighScoreColor;
+        backColor = quizHighScoreColor;
         break;
       default:
-        bkcolor = quizMiddleScoreColor;
+        backColor = quizMiddleScoreColor;
     }
     return Card(
       shape: RoundedRectangleBorder(
@@ -60,7 +58,6 @@ class TeamListItem extends StatelessWidget {
           child: Text('-', style: bigFont,),
           onPressed: () {
             teamList.decrementTeamScore(index);
-            connection.sendOneTeam(teamList.getTeam(index).teamName, teamList.getTeam(index).teamScore);
             },
         ),
         trailing: TextButton(
@@ -68,10 +65,9 @@ class TeamListItem extends StatelessWidget {
           child: Text('+', style: bigFont,),
           onPressed: () {
             teamList.incrementTeamScore(index);
-            connection.sendOneTeam(teamList.getTeam(index).teamName, teamList.getTeam(index).teamScore);
             },
         ),
-        tileColor: bkcolor,
+        tileColor: backColor,
       ),
     );
   }

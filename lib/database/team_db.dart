@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:quiflutter/model/datamodel.dart';
+import 'package:quiflutter/model/data_model.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path_provider/path_provider.dart';
 

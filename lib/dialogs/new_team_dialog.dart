@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:quiflutter/model/datamodel.dart';
-import 'package:quiflutter/model/netconnection.dart';
+import 'package:quiflutter/model/data_model.dart';
 import 'package:quiflutter/style/styles.dart';
 
 void addNewTeam(BuildContext context, DataModel data) {
@@ -12,7 +10,6 @@ void addNewTeam(BuildContext context, DataModel data) {
   showDialog(
       context: context,
       builder: (BuildContext context) {
-        final NetConnection connection = Provider.of<NetConnection>(context);
         return AlertDialog(
           title: Text(
             'Новая команда',
@@ -39,7 +36,7 @@ void addNewTeam(BuildContext context, DataModel data) {
                 onPressed: () {
                   if (data.addNewTeam(name: _controller.text)) {
                     //if (connection.connected) connection.sendAddTeam(_controller.text, 0);
-                    Navigator.of(context);
+                    Navigator.pop(context);
                   }
                 }),
             TextButton(

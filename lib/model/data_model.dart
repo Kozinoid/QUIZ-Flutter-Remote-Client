@@ -1,31 +1,34 @@
 import 'package:flutter/material.dart';
-import 'package:quiflutter/database/teamdb.dart';
+import 'package:quiflutter/connection/net_connection.dart';
+import 'package:quiflutter/database/team_db.dart';
 
 //--------------------------  All teams data model  ----------------------------
 class DataModel extends ChangeNotifier {
-  // Team list
-  List<OneTeam> _teamList = [];
 
-  // Team count
-  int get length => _teamList.length;
+  List<OneTeam> _teamList = [];         // Team list
+  int get length => _teamList.length;   // Team count
+  int _min = 0;                         // Max Team Score
+  int _max = 0;                         // Min Team Score
+  final NetConnection connection;       // Connection
 
-  // Max Team Score
-  int _min = 0;
-
-  // Min Team Score
-  int _max = 0;
+  DataModel({this.connection});
 
   // Get Team
-  OneTeam getTeam(int index) {
-    return _teamList[index];
-  }
+  OneTeam getTeam(int index) => _teamList[index];
+
+  // Connection changed
+
 
   // Add New Team
   bool addNewTeam({String name = 'New Team'}) {
     if (!hasName(name)) {
       _teamList.add(OneTeam(name: name));
-      refreshIndexes();
-      refreshAll();
+      _refreshIndexes();
+      _refreshAll();
+
+      // Send Add team
+      connection.sendAddTeamCommand(name, 0);
+
       return true;
     } else {
       return false;
@@ -43,44 +46,84 @@ class DataModel extends ChangeNotifier {
 
   // Remove Team
   void removeTeam(int index) {
+    String name = _teamList[index]._teamName;
+
     _teamList.removeAt(index);
-    refreshIndexes();
-    refreshAll();
+    _refreshIndexes();
+    _refreshAll();
+
+    // Send remove team
+    connection.sendDeleteTeamCommand(name);
   }
 
   // Rename Team
   void renameTeam(int index, String newName) {
+    String name = _teamList[index]._teamName;
+
     _teamList[index].teamName = newName;
-    refreshAll();
+    _refreshAll();
+
+    // Send rename command
+    connection.sendRenameTeamCommand(name, newName);
   }
 
   // Set Team Score
   void setTeamScore(int index, int newScore) {
+    String name = _teamList[index]._teamName;
+
     _teamList[index].teamScore = newScore;
-    refreshAll();
+    _refreshAll();
+
+    // Send refresh team command
+    connection.sendRefreshTeamCommand(name, newScore);
   }
 
   // Increment Team Score
   void incrementTeamScore(int index) {
     _teamList[index].incrementScore();
-    refreshAll();
+
+    String name = _teamList[index]._teamName;
+    int newScore = _teamList[index]._teamScore;
+
+    _refreshAll();
+
+    // Send refresh team command
+    connection.sendRefreshTeamCommand(name, newScore);
   }
 
   // Decrement Team Score
   void decrementTeamScore(int index) {
     _teamList[index].decrementScore();
-    refreshAll();
+
+    String name = _teamList[index]._teamName;
+    int newScore = _teamList[index]._teamScore;
+
+    _refreshAll();
+
+    // Send refresh team command
+    connection.sendRefreshTeamCommand(name, newScore);
+  }
+
+  void sendRefreshAllTable(){
+    // Send table
+    connection.sendClearTableCommand();
+    for (int index = 0; index < _teamList.length; index++){
+      connection.sendAddTeamCommand(_teamList[index]._teamName, _teamList[index]._teamScore);
+    }
   }
 
   // Sort By Score
   void sortByScores() {
     _teamList.sort((teamA, teamB) => teamB.teamScore - teamA.teamScore);
-    refreshIndexes();
-    refreshAll();
+    _refreshIndexes();
+    _refreshAll();
+
+    // Send refresh All table
+    sendRefreshAllTable();
   }
 
   // Refresh all
-  void refreshAll() {
+  void _refreshAll() {
     _findMinMax();
     notifyListeners();
   }
@@ -97,7 +140,7 @@ class DataModel extends ChangeNotifier {
   }
 
   // Refresh Indexes
-  void refreshIndexes(){
+  void _refreshIndexes(){
     for (var i = 0; i < _teamList.length; i++){
       _teamList[i].teamID = i + 1;
     }
@@ -113,7 +156,10 @@ class DataModel extends ChangeNotifier {
   // Clear Team List
   void clearAll(){
     _teamList.clear();
-    refreshAll();
+    _refreshAll();
+
+    // Send clear table
+    connection.sendClearTableCommand();
   }
 
   //---------------------------  DATA STORE  -----------------------------------
@@ -121,12 +167,15 @@ class DataModel extends ChangeNotifier {
   void loadData() async {
      _teamList.clear();
      _teamList = await DBProvider.db.getTeamList();
-     refreshAll();
+     _refreshAll();
+
+     // Send refresh All table
+     sendRefreshAllTable();
   }
 
   // Restore all data
   void saveData() async {
-    refreshIndexes();
+    _refreshIndexes();
     await DBProvider.db.storeAllDatabase(_teamList);
   }
 }
@@ -160,7 +209,7 @@ class OneTeam {
     };
   }
 
-  // FromMAp
+  // FromMap
   OneTeam.fromMap(Map<String, dynamic> teamMap){
     _teamId = teamMap['id'];
     _teamName = teamMap['name'];
