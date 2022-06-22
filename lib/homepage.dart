@@ -118,6 +118,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                         ),
                         onTap: () {
                           connection.connect();
+                          Navigator.of(context).pop<Drawer>();
                         },
                       );
                     },
@@ -141,6 +142,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                           data.clearAll();
                           netConnection.sendClearTableCommand();
                         }
+                      Navigator.of(context).pop<Drawer>();
                     },
                   ),
 
@@ -161,6 +163,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                         data.loadData();
                         dataModel.sendRefreshAllTable();
                       }
+                      Navigator.of(context).pop<Drawer>();
                     },
                   ),
 
@@ -178,7 +181,10 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                     onTap: () async {
                       if (await showConfirmDialog(
                           context, null, 'Save table', 'Save changes?'))
-                        data.saveData();
+                        {
+                          data.saveData();
+                        }
+                      Navigator.of(context).pop<Drawer>();
                     },
                   ),
                   //--------------------------------------------------------
