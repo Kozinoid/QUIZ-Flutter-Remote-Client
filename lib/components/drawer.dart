@@ -9,7 +9,8 @@ class QuizDrawer extends StatelessWidget{
 
   @override
   Widget build(BuildContext context) {
-    DataModel data = context.read<DataModel>();
+    //DataModel data = context.read<DataModel>();  //<---- It works too
+    DataModel data = Provider.of<DataModel>(context);
     return Consumer<NetConnection>(
       builder: (context, connection, child){
         return Drawer(
@@ -48,7 +49,7 @@ class QuizDrawer extends StatelessWidget{
                   style: menuFont,
                 ),
                 onTap: () {
-                  connection.connect();
+                  connection.searchServerAndConnect();
                   Navigator.of(context).pop<Drawer>();
                 },
               ),
@@ -89,8 +90,7 @@ class QuizDrawer extends StatelessWidget{
                 onTap: () async {
                   if (await showConfirmDialog(context, null, 'Load table',
                       'Load last saved table?')) {
-                    data.loadData();
-                    data.sendRefreshAllTable();
+                    Future(() => data.loadData()).then((value) => data.sendRefreshAllTable());
                   }
                   Navigator.of(context).pop<Drawer>();
                 },

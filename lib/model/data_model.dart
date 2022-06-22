@@ -46,7 +46,7 @@ class DataModel extends ChangeNotifier {
 
   // Remove Team
   void removeTeam(int index) {
-    String name = _teamList[index]._teamName;
+    String name = _teamList[index].teamName;
 
     _teamList.removeAt(index);
     _refreshIndexes();
@@ -58,7 +58,7 @@ class DataModel extends ChangeNotifier {
 
   // Rename Team
   void renameTeam(int index, String newName) {
-    String name = _teamList[index]._teamName;
+    String name = _teamList[index].teamName;
 
     _teamList[index].teamName = newName;
     _refreshAll();
@@ -69,7 +69,7 @@ class DataModel extends ChangeNotifier {
 
   // Set Team Score
   void setTeamScore(int index, int newScore) {
-    String name = _teamList[index]._teamName;
+    String name = _teamList[index].teamName;
 
     _teamList[index].teamScore = newScore;
     _refreshAll();
@@ -82,8 +82,8 @@ class DataModel extends ChangeNotifier {
   void incrementTeamScore(int index) {
     _teamList[index].incrementScore();
 
-    String name = _teamList[index]._teamName;
-    int newScore = _teamList[index]._teamScore;
+    String name = _teamList[index].teamName;
+    int newScore = _teamList[index].teamScore;
 
     _refreshAll();
 
@@ -95,8 +95,8 @@ class DataModel extends ChangeNotifier {
   void decrementTeamScore(int index) {
     _teamList[index].decrementScore();
 
-    String name = _teamList[index]._teamName;
-    int newScore = _teamList[index]._teamScore;
+    String name = _teamList[index].teamName;
+    int newScore = _teamList[index].teamScore;
 
     _refreshAll();
 
@@ -108,7 +108,7 @@ class DataModel extends ChangeNotifier {
     // Send table
     connection.sendClearTableCommand();
     for (int index = 0; index < _teamList.length; index++){
-      connection.sendAddTeamCommand(_teamList[index]._teamName, _teamList[index]._teamScore);
+      connection.sendAddTeamCommand(_teamList[index].teamName, _teamList[index].teamScore);
     }
   }
 
@@ -142,7 +142,7 @@ class DataModel extends ChangeNotifier {
   // Refresh Indexes
   void _refreshIndexes(){
     for (var i = 0; i < _teamList.length; i++){
-      _teamList[i].teamID = i + 1;
+      _teamList[i].teamId = i + 1;
     }
   }
 
@@ -168,9 +168,6 @@ class DataModel extends ChangeNotifier {
      _teamList.clear();
      _teamList = await DBProvider.db.getTeamList();
      _refreshAll();
-
-     // // Send refresh All table
-     // sendRefreshAllTable();
   }
 
   // Restore all data
@@ -184,45 +181,37 @@ class DataModel extends ChangeNotifier {
 class OneTeam {
   // Constructor
   OneTeam({String name}) {
-    this._teamName = name;
+    this.teamName = name;
   }
 
-  // Fields
-  int _teamId = 0;
-  String _teamName = ''; // Team name
-  int _teamScore = 0; // Team score
-
-  // Setters/Getters
-  set teamID(int id) => _teamId = id;
-  get teamID => _teamId;
-  set teamName(String newName) => _teamName = newName;
-  get teamName => _teamName;
-  set teamScore(int newScore) => _teamScore = newScore;
-  get teamScore => _teamScore;
+  // Properties
+  int teamId = 0;
+  String teamName = ''; // Team name
+  int teamScore = 0; // Team score
 
   // ToMap
   Map<String, dynamic> toMap(){
     return {
-      'id': _teamId,
-      'name': _teamName,
-      'score': _teamScore
+      'id': teamId,
+      'name': teamName,
+      'score': teamScore
     };
   }
 
   // FromMap
   OneTeam.fromMap(Map<String, dynamic> teamMap){
-    _teamId = teamMap['id'];
-    _teamName = teamMap['name'];
-    _teamScore = teamMap['score'];
+    teamId = teamMap['id'];
+    teamName = teamMap['name'];
+    teamScore = teamMap['score'];
   }
 
   // Inc Score
   void incrementScore() {
-    _teamScore++;
+    teamScore++;
   }
 
   // Dec Score
   void decrementScore() {
-    if (_teamScore > 0) _teamScore--;
+    if (teamScore > 0) teamScore--;
   }
 }

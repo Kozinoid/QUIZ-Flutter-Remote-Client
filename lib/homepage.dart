@@ -27,25 +27,27 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   void initState() {
     // TODO: implement initState
     super.initState();
-    // Init connection and data
+    // Init connection
     netConnection = NetConnection();
+    // Init  data model
     dataModel = DataModel(connection: netConnection);
-    netConnection.streamController.stream.listen((connectionState) {dataModel.sendRefreshAllTable();});
-    // Start listening of application lifecycles
-    WidgetsBinding.instance.addObserver(this);
-    // Connect to server
-    netConnection.connect();
-    // First load all data
-    dataModel.loadData();
+    // Init connection state listener
+    netConnection.streamController.stream.listen((connectionState) {
+        // Refresh server data if connected
+        if (connectionState is Connected) dataModel.sendRefreshAllTable();
+    });
+
+    WidgetsBinding.instance.addObserver(this);  // Start listening of application lifecycles
+    netConnection.searchServerAndConnect();     // Connect to server
+    dataModel.loadData();                       // First load all data
   }
 
   @override
   void dispose() {
     // TODO: implement dispose
-    // Save all data before exit
-    dataModel.saveData();
-    netConnection.disconnect();                            // DISCONNECTION
-    netConnection.streamController.close();
+    dataModel.saveData();                   // Save all data before exit
+    netConnection.disconnect();             // DISCONNECTION
+    netConnection.streamController.close(); // Close listening connection state
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -54,14 +56,11 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     // TODO: implement didChangeAppLifecycleState
     if (state == AppLifecycleState.paused) {
-      // if the App is paused save all data
-      dataModel.saveData();
-      netConnection.disconnect();                          // DISCONNECTION
+      dataModel.saveData();                       // if the App is paused save all data
+      netConnection.disconnect();                 // DISCONNECTION
     } else if (state == AppLifecycleState.resumed) {
-      // Connect to server
-      netConnection.connect();
-      // if the App is resumed load all data
-      dataModel.loadData();
+      netConnection.searchServerAndConnect();     // Connect to server
+      dataModel.loadData();                       // if the App is resumed load all data
     }
     super.didChangeAppLifecycleState(state);
   }
@@ -76,7 +75,8 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         // Data provider for data model access
         ChangeNotifierProvider<DataModel>.value(value: dataModel),
       ],
-      child: Consumer<DataModel>( // For listening data model changes
+      child: Consumer<DataModel>(
+        // For listening data model changes
         builder: (context, data, child) {
           return Scaffold(
             backgroundColor: quizMainBackColor,
@@ -98,7 +98,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                               color: quizIconColor,
                             ),
                       onPressed: () {
-                        connection.connect();
+                        if (!connection.connected) connection.searchServerAndConnect();
                       },
                     );
                   },
