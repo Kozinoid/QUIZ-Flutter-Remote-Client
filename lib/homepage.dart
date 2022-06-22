@@ -29,13 +29,13 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     // Init connection and data
     netConnection = NetConnection();
     dataModel = DataModel(connection: netConnection);
-    netConnection.streamController.stream.listen((connectionState) {dataModel.loadData();});
+    netConnection.streamController.stream.listen((connectionState) {dataModel.sendRefreshAllTable();});
     // Start listening of application lifecycles
     WidgetsBinding.instance.addObserver(this);
     // Connect to server
     netConnection.connect();
     // First load all data
-    //dataModel.loadData();
+    dataModel.loadData();
   }
 
   @override
@@ -60,7 +60,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       // Connect to server
       netConnection.connect();
       // if the App is resumed load all data
-      //dataModel.loadData();
+      dataModel.loadData();
     }
     super.didChangeAppLifecycleState(state);
   }
@@ -159,6 +159,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                       if (await showConfirmDialog(context, null, 'Load table',
                           'Load last saved table?')) {
                         data.loadData();
+                        dataModel.sendRefreshAllTable();
                       }
                     },
                   ),

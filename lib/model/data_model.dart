@@ -169,8 +169,8 @@ class DataModel extends ChangeNotifier {
      _teamList = await DBProvider.db.getTeamList();
      _refreshAll();
 
-     // Send refresh All table
-     sendRefreshAllTable();
+     // // Send refresh All table
+     // sendRefreshAllTable();
   }
 
   // Restore all data
