@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:quiflutter/components/drawer.dart';
 import 'package:quiflutter/connection/net_connection.dart';
 import 'package:quiflutter/model/data_model.dart';
 import 'package:quiflutter/components/quiz_floating_button.dart';
@@ -70,130 +71,20 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        // Connection provider for listening connection state and sending network commands to server
         ChangeNotifierProvider<NetConnection>.value(value: netConnection),
-        // Connection provider
+        // Data provider for data model access
         ChangeNotifierProvider<DataModel>.value(value: dataModel),
-        // Data provider
       ],
-      child: Consumer<DataModel>(
+      child: Consumer<DataModel>( // For listening data model changes
         builder: (context, data, child) {
           return Scaffold(
             backgroundColor: quizMainBackColor,
-            drawer: Drawer(
-              child: ListView(
-                children: [
-                  //-------------------- Menu header -----------------------
-                  DrawerHeader(
-                      margin: EdgeInsets.all(0),
-                      decoration: ShapeDecoration(
-                        color: quizMainPanelColor,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(0),
-                        ),
-                      ),
-                      child: Center(
-                        child: Text(
-                          'QUIZ menu',
-                          style: menuFont,
-                        ),
-                      )),
-
-                  //--------------- Menu item 'Connection' -----------------
-                  Consumer<NetConnection>(
-                    builder: (context, connection, child) {
-                      return ListTile(
-                        tileColor: quizMainBackColor,
-                        leading: connection.connected
-                            ? Icon(
-                                Icons.wifi_tethering_sharp,
-                                color: quizListTextColor,
-                              )
-                            : Icon(
-                                Icons.portable_wifi_off,
-                                color: quizListTextColor,
-                              ),
-                        title: Text(
-                          'Connection',
-                          style: menuFont,
-                        ),
-                        onTap: () {
-                          connection.connect();
-                          Navigator.of(context).pop<Drawer>();
-                        },
-                      );
-                    },
-                  ),
-
-                  //--------------- Menu item 'Clear All' ------------------
-                  ListTile(
-                    tileColor: quizMainBackColor,
-                    leading: Icon(
-                      Icons.clear,
-                      color: quizListTextColor,
-                    ),
-                    title: Text(
-                      'Clear all',
-                      style: menuFont,
-                    ),
-                    onTap: () async {
-                      if (await showConfirmDialog(
-                          context, null, 'Clear all', 'Are you shure?'))
-                        {
-                          data.clearAll();
-                          netConnection.sendClearTableCommand();
-                        }
-                      Navigator.of(context).pop<Drawer>();
-                    },
-                  ),
-
-                  //------------------ Menu item 'Load' --------------------
-                  ListTile(
-                    tileColor: quizMainBackColor,
-                    leading: Icon(
-                      Icons.folder,
-                      color: quizListTextColor,
-                    ),
-                    title: Text(
-                      'Load',
-                      style: menuFont,
-                    ),
-                    onTap: () async {
-                      if (await showConfirmDialog(context, null, 'Load table',
-                          'Load last saved table?')) {
-                        data.loadData();
-                        dataModel.sendRefreshAllTable();
-                      }
-                      Navigator.of(context).pop<Drawer>();
-                    },
-                  ),
-
-                  //------------------ Menu item 'Save' --------------------
-                  ListTile(
-                    tileColor: quizMainBackColor,
-                    leading: Icon(
-                      Icons.save,
-                      color: quizListTextColor,
-                    ),
-                    title: Text(
-                      'Save',
-                      style: menuFont,
-                    ),
-                    onTap: () async {
-                      if (await showConfirmDialog(
-                          context, null, 'Save table', 'Save changes?'))
-                        {
-                          data.saveData();
-                        }
-                      Navigator.of(context).pop<Drawer>();
-                    },
-                  ),
-                  //--------------------------------------------------------
-                ],
-              ),
-            ),
+            //========================  MAIN MENU  =============================
+            drawer: QuizDrawer(),
             appBar: AppBar(
               actions: [
-                // ------------- DOUBLE 'Connect' button  ------------------
+                // --------------  'Connect' button in App Bar -----------------
                 Consumer<NetConnection>(
                   builder: (context, connection, child) {
                     return RoundedRectangleFloatingButton(
@@ -222,12 +113,12 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
               centerTitle: true,
             ),
 
-            // -------------------------  Team List  -----------------------
+            // =========================  Team List  ===========================
             body: Container(
               child: ListView.builder(
                   itemCount: data.length,
                   itemBuilder: (context, index) {
-                    //-------- One Team Item  ------
+                    //------------------ One Team Item  -------------------
                     return Dismissible(
                       // Confirm deleting Team
                       confirmDismiss: (direction) => showConfirmDialog(
@@ -247,6 +138,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                     );
                   }),
             ),
+            //========================  FOOTER MENU  ===========================
             persistentFooterButtons: [
               // ------------------ 'Add New Team' button  -----------------
               RoundedRectangleFloatingButton(
