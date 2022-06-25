@@ -111,6 +111,8 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                     backgroundColor: quizMainPanelColor),
               ),
               centerTitle: true,
+              backgroundColor: quizMainPanelColor,
+              foregroundColor: quizMainTextColor,
             ),
 
             // =========================  Team List  ===========================
